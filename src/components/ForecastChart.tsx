@@ -1,129 +1,70 @@
 
-import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { WeatherData } from "@/types/weather";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  Line,
-  LineChart,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
+import { ForecastData } from '@/types/weather';
+import { Card } from '@/components/ui/card';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface ForecastChartProps {
-  data: WeatherData;
-  type: "temperature" | "precipitation";
+  forecast: ForecastData;
 }
 
-export function ForecastChart({ data, type }: ForecastChartProps) {
-  const chartData = data.forecast.map((item) => ({
-    time: new Date(item.dt).toLocaleTimeString("ru-RU", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-    date: new Date(item.dt).toLocaleDateString("ru-RU", {
-      month: "short",
-      day: "numeric",
-    }),
-    fullDate: new Date(item.dt),
-    value: type === "temperature" ? Math.round(item.temp) : item.precipitation,
-  }));
-
-  const config = {
-    temp: {
-      label: "Температура",
-      theme: {
-        light: "#f97316",
-        dark: "#f97316",
-      },
-    },
-    precip: {
-      label: "Осадки",
-      theme: {
-        light: "#0ea5e9",
-        dark: "#0ea5e9",
-      },
-    },
-  };
-
-  const title = type === "temperature" ? "Прогноз температуры" : "Прогноз осадков";
-  const unit = type === "temperature" ? "°C" : "мм";
-  const color = type === "temperature" ? "#f97316" : "#0ea5e9";
-  const dataKey = type === "temperature" ? "temp" : "precip";
+export const ForecastChart = ({ forecast }: ForecastChartProps) => {
+  // Подготовка данных для графика - берем только следующие 24-36 часов (8-12 точек при 3-часовом интервале)
+  const chartData = forecast.list.slice(0, 12).map((item) => {
+    // Получаем время в формате "HH:00"
+    const date = new Date(item.dt * 1000);
+    const hours = date.getHours();
+    const timeLabel = `${hours}:00`;
+    
+    // Получаем значения для графика
+    return {
+      time: timeLabel,
+      temp: Math.round(item.main.temp),
+      feelsLike: Math.round(item.main.feels_like),
+      // Добавляем вероятность осадков в процентах (pop - probability of precipitation)
+      precipitation: Math.round(item.pop * 100)
+    };
+  });
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="h-[300px]">
-        <ChartContainer
-          className="h-[300px]"
-          config={config}
-        >
-          <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-            <Line
-              type="monotone"
-              dataKey="value"
-              name={dataKey}
-              stroke={color}
-              strokeWidth={2}
-              dot={{ strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, strokeWidth: 0 }}
-            />
-            <CartesianGrid stroke="#ccc" opacity={0.2} vertical={false} />
-            <XAxis
-              dataKey="time"
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(value) => value}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(value) => `${value}${unit}`}
-            />
-            <ChartTooltip
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  const data = payload[0].payload;
-                  return (
-                    <div className="rounded-lg border bg-background p-2 shadow-sm">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="flex flex-col">
-                          <span className="text-[0.70rem] uppercase text-muted-foreground">
-                            Дата
-                          </span>
-                          <span className="font-bold">
-                            {data.date}, {data.time}
-                          </span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[0.70rem] uppercase text-muted-foreground">
-                            {type === "temperature" ? "Температура" : "Осадки"}
-                          </span>
-                          <span className="font-bold">
-                            {data.value}
-                            {unit}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-          </LineChart>
-        </ChartContainer>
-      </CardContent>
+    <Card className="p-4">
+      <div className="mb-4">
+        <h3 className="text-md font-medium">График температуры и осадков</h3>
+        <p className="text-xs text-muted-foreground">Прогноз на ближайшие 36 часов</p>
+      </div>
+      
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey="time" />
+          <YAxis yAxisId="left" />
+          <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
+          <Tooltip />
+          <Legend />
+          <Line 
+            yAxisId="left"
+            type="monotone" 
+            dataKey="temp" 
+            name="Температура, °C" 
+            stroke="#ff7300" 
+            activeDot={{ r: 8 }} 
+          />
+          <Line 
+            yAxisId="left"
+            type="monotone" 
+            dataKey="feelsLike" 
+            name="Ощущается как, °C" 
+            stroke="#ffc658" 
+            strokeDasharray="5 5" 
+          />
+          <Line 
+            yAxisId="right"
+            type="monotone" 
+            dataKey="precipitation" 
+            name="Вероятность осадков, %" 
+            stroke="#8884d8" 
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </Card>
   );
-}
+};

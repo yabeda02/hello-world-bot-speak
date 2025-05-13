@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { Toast, toast as shadcnToast } from "@/components/ui/toast"
 
@@ -153,9 +152,6 @@ function toast({
     toast: {
       ...props,
       id,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
-      },
     },
   })
 

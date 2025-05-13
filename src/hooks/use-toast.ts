@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Toast, toast as shadcnToast } from "@/components/ui/toast"
+import { Toast } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 5
 const TOAST_REMOVE_DELAY = 1000000

@@ -1,5 +1,5 @@
 
-import { WeatherData, ForecastData } from "@/types/weather";
+import { WeatherData, ForecastData, ForecastItem } from "@/types/weather";
 import { WEATHER_API_CONFIG } from "@/config/api";
 
 const API_KEY = import.meta.env.VITE_WEATHER_API_KEY || WEATHER_API_CONFIG.API_KEY;
